@@ -22,7 +22,7 @@ use bitcoin::secp256k1::key::{PublicKey, SecretKey};
 use bitcoin::util::base58;
 use bitcoin::util::bip32;
 use bitcoin::util::psbt;
-use bitcoin::{Address, Network, OutPoint, Script, Transaction, TxIn, Txid};
+use bitcoin::{Address, Network, OutPoint, Script, Transaction, TxIn, Txid, network};
 
 use crate::blockchain::BlockchainFactory;
 use crate::database::{BatchDatabase, MemoryDatabase};
@@ -102,10 +102,7 @@ impl PaymentCode {
 
     pub fn notification_address(&self, secp: &SecpCtx, network: Network) -> Address {
         Address::p2pkh(
-            &bitcoin::PublicKey {
-                compressed: true,
-                key: self.derive(secp, 0),
-            },
+            &bitcoin::PublicKey,
             network,
         )
     }
@@ -124,10 +121,7 @@ impl PaymentCode {
             depth: 0,
             parent_fingerprint: bip32::Fingerprint::default(),
             child_number: bip32::ChildNumber::Normal { index: 0 },
-            public_key: bitcoin::PublicKey {
-                compressed: true,
-                key: self.public_key,
-            },
+            public_key: bitcoin::PublicKey,
             chain_code: self.chain_code,
         }
     }
@@ -184,12 +178,12 @@ impl FromStr for PaymentCode {
 pub struct Bip47Notification<K: DerivableKey<Legacy>>(pub K);
 
 impl<K: DerivableKey<Legacy>> DescriptorTemplate for Bip47Notification<K> {
-    fn build(self) -> Result<DescriptorTemplateOut, DescriptorError> {
+    fn build(self, network:network) -> Result<DescriptorTemplateOut, DescriptorError> {
         P2Pkh((
             self.0,
             bip32::DerivationPath::from_str("m/47'/0'/0'").unwrap(),
         ))
-        .build()
+        .build(network)
     }
 }
 
@@ -391,7 +385,7 @@ impl<'w, D: BatchDatabase> Bip47Wallet<'w, D> {
 
         let wallet = Wallet::new(
             P2Pkh(bitcoin::PrivateKey {
-                key: sk,
+                inner: sk,
                 compressed: true,
                 network,
             }),
@@ -425,10 +419,7 @@ impl<'w, D: BatchDatabase> Bip47Wallet<'w, D> {
         };
 
         let wallet = Wallet::new(
-            P2Pkh(bitcoin::PublicKey {
-                key: pk,
-                compressed: true,
-            }),
+            P2Pkh(bitcoin::PublicKey),
             None,
             network,
             MemoryDatabase::new(),
