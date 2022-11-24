@@ -9,6 +9,7 @@
 // You may not use this file except in accordance with one or both of these
 // licenses.
 
+use crate::util::bip47::scalar::OutOfRangeError;
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::ops::Deref;
@@ -382,7 +383,7 @@ impl<'w, D: BatchDatabase> Bip47Wallet<'w, D> {
             return Ok(None);
         }
         
-        // sk.add_tweak(&scalar::Scalar::from(&shared_secret.into_32()))?;
+        sk.add_tweak(&scalar::Scalar::from_be_bytes(shared_secret.into_inner())?)?;
 
         let wallet = Wallet::new(
             P2Pkh(bitcoin::PrivateKey {
@@ -668,6 +669,7 @@ pub enum Error {
     SecpKey(bitcoin::secp256k1::Error),
     Key(crate::keys::KeyError),
     Wallet(WalletError),
+    OutOfRangeError(OutOfRangeError)
 }
 
 // TODO: impl display, std::err
@@ -690,6 +692,11 @@ impl From<crate::keys::KeyError> for Error {
 impl From<WalletError> for Error {
     fn from(e: WalletError) -> Error {
         Error::Wallet(e)
+    }
+}
+impl From<OutOfRangeError> for Error {
+    fn from(e: OutOfRangeError) -> Error {
+        Error::OutOfRangeError(e)
     }
 }
 
