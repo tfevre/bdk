@@ -129,6 +129,11 @@ path = "examples/rpcwallet.rs"
 required-features = ["keys-bip39", "key-value-db", "rpc", "electrsd/bitcoind_22_0"]
 
 [[example]]
+name = "bip47"
+path = "examples/rpcwallet.rs"
+required-features = ["keys-bip39", "key-value-db", "rpc", "electrsd/bitcoind_22_0"]
+
+[[example]]
 name = "psbt_signer"
 path = "examples/psbt_signer.rs"
 required-features = ["electrum"]
